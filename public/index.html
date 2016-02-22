@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>canary</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+
+    <script>
+        function getData(onDone) {
+            $.ajax('data')
+                    .done(function (response) {
+                        onDone(JSON.parse(response));
+                    })
+                    .fail(function () {
+                        alert("AJAX error");
+                    });
+        }
+
+        $(document).ready(function () {
+            getData(function (co2data) {
+                var first = co2data[0];
+                var last = co2data.slice(-1)[0];
+                var startDate = new Date(first.timestamp);
+                var currDate = new Date(last.timestamp);
+
+                $('#line-chart').highcharts({
+                    chart: {
+                        type: 'spline',
+                        animation: Highcharts.svg, // don't animate in old IE
+                        marginRight: 10,
+                        events: {
+                        }
+                    },
+                    colors: ['#0084FF', '#ff8000'],
+                    title: {
+                        text: 'co2 and temperature history'
+                    },
+                    xAxis: {
+                        type: 'datetime'
+                    },
+                    yAxis: [
+                        {
+                            title: {
+                                text: 'co2 (ppm)',
+                                style: {
+                                    color: '#0084FF'
+                                }
+                            }
+                        },
+                        {
+                            title: {
+                                text: 'tmp (°C)',
+                                style: {
+                                    color: '#ff8000'
+                                }
+                            }
+                        }],
+                    tooltip: {
+                        formatter: function () {
+                            return '<b>' + this.series.name + '</b><br/>' +
+                                    Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
+                                    Highcharts.numberFormat(this.y, 2);
+                        }
+                    },
+                    legend: {
+                        enabled: false
+                    },
+                    exporting: {
+                        enabled: false
+                    },
+                    series: [
+                        {
+                            name: 'co2 data',
+                            yAxis: 0,
+                            data: (function () {
+                                // generate an array of random data
+                                var data = [];
+
+                                for (var i = 0; i < co2data.length; ++i) {
+                                    var d = co2data[i];
+
+                                    data.push({
+                                        x: (new Date(d.timestamp)).getTime(),
+                                        y: d.co2
+                                    });
+                                }
+
+                                return data;
+                            }())
+                        },
+                        {
+                            name: 'tmp data',
+                            yAxis: 1,
+                            data: (function () {
+                                // generate an array of random data
+                                var data = [];
+
+                                for (var i = 0; i < co2data.length; ++i) {
+                                    var d = co2data[i];
+
+                                    data.push({
+                                        x: (new Date(d.timestamp)).getTime(),
+                                        y: d.tmp
+                                    });
+                                }
+
+                                return data;
+                            }())
+                        }
+                    ]
+                });
+            });
+
+            var socket = io();
+
+        });
+    </script>
+
+</head>
+
+<body role="document">
+
+<div class="container">
+    <div class="page-header">
+        <h1>canary
+            <small>v1.0</small>
+        </h1>
+    </div>
+
+    <div class="row">
+        <div id="line-chart" class="col-md-12">
+        </div>
+    </div>
+</div>
+
+
+</body>
+</html>
