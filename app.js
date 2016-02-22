@@ -9,7 +9,7 @@ var io = require('socket.io')(server);
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/data', function (request, reply) {
-    r.connect({host: 'co2monitor', port: 28015}, function (err, conn) {
+    r.connect({host: 'localhost', port: 28015}, function (err, conn) {
         if (err) throw err;
 
         var now = new Date();
